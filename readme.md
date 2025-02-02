@@ -8,6 +8,9 @@ and as such I highly recommend you go check out the [World Generation Section](h
 This project is a fork because I wanted to use the Terrain generation algorithm
 that I had implemented to go in another direction this time. Namely, World Simulation.
 
+The program's name is a reference to the Kino no tabi series; whose full name is
+Kino's Journey —the Beautiful World—.
+
 ## Configuration
 
 ### Introduction
