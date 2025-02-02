@@ -2,6 +2,7 @@ with Glib;          use Glib;
 with Cairo;         use Cairo;
 with Gtkada.Canvas; use Gtkada.Canvas;
 with Gdk.RGBA;      use Gdk.RGBA;
+with Image_IO; use Image_IO;
 
 with Constants; use Constants;
 
@@ -33,6 +34,13 @@ package Canvas is
    type Display_Item is access all Display_Item_Record'Class;
 
    procedure Initial_Setup (Canvas : access Interactive_Canvas_Record'Class);
+
+   procedure Put_Pixel (Canvas : access Interactive_Canvas_Record'Class;
+                     X, Y : Natural; Color : Gdk_RGBA);
+
+   procedure Shift_Pixel (Canvas : access Interactive_Canvas_Record'Class;
+                           X, Y : in out Natural; Color : Gdk_RGBA;
+                           Data : Image_Data);
 
 private
 

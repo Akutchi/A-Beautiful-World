@@ -81,9 +81,9 @@ package body RGBA is
 
    begin
 
-      Color_I.Red   := Gdouble_To_UInt8 (Color.Red);
+      Color_I.Red := Gdouble_To_UInt8 (Color.Red);
       Color_I.Green := Gdouble_To_UInt8 (Color.Green);
-      Color_I.Blue  := Gdouble_To_UInt8 (Color.Blue);
+      Color_I.Blue := Gdouble_To_UInt8 (Color.Blue);
 
       return Color_I;
 
@@ -99,9 +99,9 @@ package body RGBA is
 
    begin
 
-      Color_Gdk.Red   := UInt8_To_Gdouble (Color.Red);
+      Color_Gdk.Red := UInt8_To_Gdouble (Color.Red);
       Color_Gdk.Green := UInt8_To_Gdouble (Color.Green);
-      Color_Gdk.Blue  := UInt8_To_Gdouble (Color.Blue);
+      Color_Gdk.Blue := UInt8_To_Gdouble (Color.Blue);
       Color_Gdk.Alpha := 1.0;
 
       return Color_Gdk;
@@ -147,6 +147,7 @@ package body RGBA is
    function Get_Pixel_Color (Data : Image_Data; X, Y : Pos) return Color_Info
    is
    begin
+
       return Data (Natural (X), Natural (Y));
 
    end Get_Pixel_Color;

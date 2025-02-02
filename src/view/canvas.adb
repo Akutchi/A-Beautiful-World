@@ -1,4 +1,3 @@
-with Image_IO;            use Image_IO;
 with Image_IO.Holders;    use Image_IO.Holders;
 with Image_IO.Operations; use Image_IO.Operations;
 
@@ -74,7 +73,7 @@ package body Canvas is
 
    begin
 
-      Read (Final_Destination, Image);
+      Read (Map_Destination, Image);
 
       declare
 
@@ -107,5 +106,42 @@ package body Canvas is
       end;
 
    end Initial_Setup;
+
+   procedure Put_Pixel (Canvas : access Interactive_Canvas_Record'Class;
+                     X, Y : Natural; Color : Gdk_RGBA)
+   is
+
+      Item_k : constant Display_Item := new Display_Item_Record;
+
+   begin
+
+      Remove (Canvas, Item_At_Coordinates
+         (Canvas, Gint (X + 1), Gint (Y + 1)));
+
+      Initialize (Item_k, Canvas, Color);
+      Put (Canvas, Item_k, Gint (X), Gint (Y));
+      Refresh_Canvas (Canvas);
+
+   end Put_Pixel;
+
+   procedure Shift_Pixel (Canvas : access Interactive_Canvas_Record'Class;
+                           X, Y : in out Natural; Color : Gdk_RGBA;
+                           Data : Image_Data)
+   is
+
+      Can_Config : Constants.Canvas_Configuration;
+
+      Base_Color : constant Gdk_RGBA :=
+         Color_Info_To_GdkRGBA (Get_Pixel_Color
+                                 (Data,
+                                 Pos (Gint (Y) / Can_Config.Case_Width),
+                                 Pos (Gint (X) / Can_Config.Case_Height)));
+   begin
+
+      Put_Pixel (Canvas, X, Y, Base_Color);
+      X := (X + 4) mod 640;
+      Put_Pixel (Canvas, X, Y, Color);
+
+   end Shift_Pixel;
 
 end Canvas;

@@ -4,9 +4,7 @@ with Gdk.RGBA; use Gdk.RGBA;
 package Constants is
 
    Map_Destination : constant String := "../layer_templates/Layer_6.png";
-
-   Final_Destination : constant String :=
-     "../layer_templates/Layer_6_Dijkstra.png";
+   GUI_Destination : constant String := "../layer_templates/GUI.png";
 
    type Window_Configuration is record
 
