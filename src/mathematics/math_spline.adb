@@ -2,10 +2,15 @@ with Ada.Text_IO;
 with Ada.Numerics.Float_Random;
 
 with GNAT.Formatted_String; use GNAT.Formatted_String;
+with System;
 
 package body Math_Spline is
 
    package T_IO renames Ada.Text_IO;
+
+   -----------
+   -- Trunc --
+   -----------
 
    function Trunc (x : Float; To : Natural) return Float
    is
@@ -15,6 +20,28 @@ package body Math_Spline is
             1.0 / (10.0 * Float (To));
 
    end Trunc;
+
+   --------------
+   -- Evaluate --
+   --------------
+
+   function Evaluate (P : Two_Polynomial; t : Float) return Float
+   is
+      Value : Float := 0.0;
+
+   begin
+
+      for I in P'Range loop
+         Value := Value + P (I) * (t ** (2 - I));
+      end loop;
+
+      return Value;
+
+   end Evaluate;
+
+   -------------------------
+   -- Random_Coefficients --
+   -------------------------
 
    function Random_Coefficients return Two_Polynomial
    is
@@ -36,16 +63,16 @@ package body Math_Spline is
 
    end Random_Coefficients;
 
+   --------------
+   -- Get_Pi_1 --
+   --------------
+
    function Get_Pi_1 (Pi : Two_Polynomial; Knot : Float) return Two_Polynomial
    is
-      Sum : Float := 0.0;
+      Sum : constant Float := Evaluate (Pi, Knot);
       Pi_1 : Two_Polynomial := (0.0, 0.0, 0.0);
 
    begin
-
-      for I in 0 .. 2 loop
-         Sum := Sum + Knot ** (2 - I) * Pi (I);
-      end loop;
 
       for I in 0 .. 2 loop
          Pi_1 (I) := Sum / (3.0 * Knot ** (2 - I));
@@ -54,6 +81,61 @@ package body Math_Spline is
       return Pi_1;
 
    end Get_Pi_1;
+
+   ----------------
+   -- Initialize --
+   ----------------
+
+   function Initialize (S : Spline; S_Interval : Spline_Range) return Spline
+   is
+
+      a        : constant Float := S_Interval (S_Interval'First);
+      b        : constant Float := S_Interval (S_Interval'Last);
+      Knot_1   : constant Float := (1.0 / 3.0) * (b - a);
+      Knot_2   : constant Float := (2.0 / 3.0) * (b - a);
+
+      P0 : constant Two_Polynomial := Random_Coefficients;
+      P1 : constant Two_Polynomial := Get_Pi_1 (P0, Knot_1);
+      P2 : constant Two_Polynomial := Get_Pi_1 (P1, Knot_2);
+
+   begin
+
+      return ((P0, P1, P2), S_Interval);
+
+   end Initialize;
+
+   function Evaluate (S : Spline; t : Float) return Float
+   is
+
+      a        : constant Float := S.Interval (S.Interval'First);
+      b        : constant Float := S.Interval (S.Interval'Last);
+      Knot_1   : constant Float := (1.0 / 3.0) * (b - a);
+      Knot_2   : constant Float := (2.0 / 3.0) * (b - a);
+
+   begin
+
+      if t < S.Interval (S.Interval'First) then
+         return Float (System.Min_Int);
+
+      elsif t > S.Interval (S.Interval'Last) then
+         return Float (System.Max_Int);
+      end if;
+
+      if t <= Knot_1 then
+         return Evaluate (S.S_t (S.S_t'First), t);
+
+      elsif t > Knot_1 and then t <= Knot_2 then
+         return Evaluate (S.S_t (S.S_t'First + 1), t);
+
+      end if;
+
+      return Evaluate (S.S_t (S.S_t'Last), t);
+
+   end Evaluate;
+
+   -----------
+   -- Print --
+   -----------
 
    procedure Print (P : Two_Polynomial)
    is
