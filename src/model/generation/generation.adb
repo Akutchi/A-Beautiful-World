@@ -2,15 +2,20 @@ with Ada.Numerics;                      use Ada.Numerics;
 with Ada.Numerics.Elementary_Functions; use Ada.Numerics.Elementary_Functions;
 
 with Ada.Numerics.Float_Random;
+with Image_IO.Holders;
+with Image_IO.Operations;
 
-with Image_IO.Holders;    use Image_IO.Holders;
-with Image_IO.Operations; use Image_IO.Operations;
-
-with RGBA;            use RGBA;
-with Math_Operations; use Math_Operations;
-with Random_Biome;    use Random_Biome;
+with RGBA;
+with Math_Operations;
+with Random_Biome;
 
 package body Generation is
+
+   package IIO_H renames Image_IO.Holders;
+   package IIO_O renames Image_IO.Operations;
+
+   package MO renames Math_Operations;
+   package Rnd_Bio renames Random_Biome;
 
    ------------
    -- Island --
@@ -20,19 +25,19 @@ package body Generation is
 
       Case_Until_End : constant Natural := Zoom_Levels (0) * Zoom_Levels (0);
 
-      Choice : Land_Or_Ocean;
+      Choice : Rnd_Bio.Land_Or_Ocean;
 
-      Image : Handle;
+      Image : IIO_H.Handle;
       Color : Gdk_RGBA;
 
    begin
 
-      Create_Image (Source, Zoom_Levels (0));
-      Read (Image_Destination & Source, Image);
+      RGBA.Create_Image (Source, Zoom_Levels (0));
+      IIO_O.Read (RGBA.Image_Destination & Source, Image);
 
       declare
 
-         Data : Image_Data := Image.Value;
+         Data : IIO.Image_Data := Image.Value;
 
       begin
 
@@ -45,19 +50,19 @@ package body Generation is
 
             begin
 
-               Choice := Draw_Random_Base_Biome;
+               Choice := Rnd_Bio.Draw_Random_Base_Biome;
 
                if Choice > 3 then
                   Color := Ocean;
                else
                   Color := Rocks;
                end if;
-               Put_Pixel (Data, I, J, Color);
+               RGBA.Put_Pixel (Data, I, J, Color);
 
             end;
          end loop;
 
-         Write_PNG (Image_Destination & Source, Data);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Source, Data);
       end;
 
    end Island;
@@ -72,20 +77,20 @@ package body Generation is
       I, J : Pos := 0; --  Base coords
       K, L : Pos := 0; --  Zoomed Coords
 
-      Image_Src  : Handle;
-      Image_Dest : Handle;
+      Image_Src  : IIO_H.Handle;
+      Image_Dest : IIO_H.Handle;
 
    begin
 
-      Create_Image (Destination, Multiply * 2);
+      RGBA.Create_Image (Destination, Multiply * 2);
 
-      Read (Image_Destination & Source, Image_Src);
-      Read (Image_Destination & Destination, Image_Dest);
+      IIO_O.Read (RGBA.Image_Destination & Source, Image_Src);
+      IIO_O.Read (RGBA.Image_Destination & Destination, Image_Dest);
 
       declare
 
-         Data_Src  : constant Image_Data := Image_Src.Value;
-         Data_Dest : Image_Data          := Image_Dest.Value;
+         Data_Src  : constant IIO.Image_Data := Image_Src.Value;
+         Data_Dest : IIO.Image_Data          := Image_Dest.Value;
 
       begin
 
@@ -102,14 +107,15 @@ package body Generation is
 
                declare
                   Color : constant Gdk_RGBA :=
-                    Color_Info_To_GdkRGBA (Get_Pixel_Color (Data_Src, I, J));
+                    RGBA.Color_Info_To_GdkRGBA
+                     (RGBA.Get_Pixel_Color (Data_Src, I, J));
 
                begin
 
-                  Put_Pixel (Data_Dest, K, L, Color);
-                  Put_Pixel (Data_Dest, K + 1, L, Color);
-                  Put_Pixel (Data_Dest, K, L + 1, Color);
-                  Put_Pixel (Data_Dest, K + 1, L + 1, Color);
+                  RGBA.Put_Pixel (Data_Dest, K, L, Color);
+                  RGBA.Put_Pixel (Data_Dest, K + 1, L, Color);
+                  RGBA.Put_Pixel (Data_Dest, K, L + 1, Color);
+                  RGBA.Put_Pixel (Data_Dest, K + 1, L + 1, Color);
 
                end;
 
@@ -123,7 +129,7 @@ package body Generation is
 
          end loop;
 
-         Write_PNG (Image_Destination & Destination, Data_Dest);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Destination, Data_Dest);
       end;
 
    end Zoom;
@@ -135,7 +141,7 @@ package body Generation is
    procedure Add_Islands (Source : String; Current_Zoom : Positive) is
 
       N     : constant Positive := Current_Zoom;
-      Image : Handle;
+      Image : IIO_H.Handle;
 
       function Choose_Land_Or_Ocean return Gdk_RGBA is
 
@@ -152,46 +158,59 @@ package body Generation is
 
    begin
 
-      Read (Image_Destination & Source, Image);
+      IIO_O.Read (RGBA.Image_Destination & Source, Image);
 
       declare
 
-         Data : Image_Data := Image.Value;
+         Data : IIO.Image_Data := Image.Value;
 
       begin
 
-         for i_index in 2 .. N - 3 loop
-            for j_index in 2 .. N - 3 loop
+         for M in 0 .. (N - 3)**2 loop
 
-               declare
+            declare
 
-                  I : constant Pos := Pos (i_index);
-                  J : constant Pos := Pos (j_index);
+               i_index : constant Positive :=
+                  (if M mod (N - 3) < 2 then 2 else  M mod (N - 3));
 
-               begin
+               j_index : constant Positive :=
+                  (if M / (N - 3) < 2 then 2 else  M / (N - 3));
 
-                  if norm (Gradient_x (Data, Integer (I), Integer (J))) > 0.0
-                    or else
-                      norm (Gradient_y (Data, Integer (I), Integer (J))) > 0.0
-                  then
+               I : constant Pos := Pos (i_index);
+               J : constant Pos := Pos (j_index);
 
-                     for k_index in -1 .. 1 loop
-                        for l_index in -1 .. 1 loop
+               Gx_norm : constant Float :=
+                  MO.norm (MO.Gradient_x (Data, Integer (I), Integer (J)));
 
-                           declare
-                              K : constant Pos := Pos (i_index + k_index);
-                              L : constant Pos := Pos (j_index + l_index);
-                           begin
-                              Put_Pixel (Data, K, L, Choose_Land_Or_Ocean);
-                           end;
-                        end loop;
-                     end loop;
-                  end if;
-               end;
-            end loop;
+               Gy_norm : constant Float :=
+                  MO.norm (MO.Gradient_y (Data, Integer (I), Integer (J)));
+
+            begin
+
+               if Gx_norm > 0.0 or else Gy_norm > 0.0 then
+
+                  for M in 0 .. 9 loop
+
+                     declare
+
+                        k_index : constant Integer := (M mod 3) - 1;
+                        l_index : constant Integer := (M / 3) - 1;
+
+                        K : constant Pos :=
+                           Pos (i_index + k_index);
+
+                        L : constant Pos :=
+                           Pos (j_index + l_index);
+                     begin
+                        RGBA.Put_Pixel
+                           (Data, K, L, Choose_Land_Or_Ocean);
+                     end;
+                  end loop;
+               end if;
+            end;
          end loop;
 
-         Write_PNG (Image_Destination & Source, Data);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Source, Data);
       end;
 
    end Add_Islands;
@@ -201,21 +220,18 @@ package body Generation is
    ------------------------
 
    function Surrounded_By
-     (Terrain           : Gdk_RGBA; Data : Image_Data; I, J : Lign_Type;
+     (Terrain           : Gdk_RGBA; Data : IIO.Image_Data; I, J : Lign_Type;
       Dilatation_Number : Positive := 5) return Boolean
    is
 
       function Is_Terrain
-        (Terrain : Gdk_RGBA; Data : Image_Data; I, J : Lign_Type)
-         return Integer;
-
-      function Is_Terrain
-        (Terrain : Gdk_RGBA; Data : Image_Data; I, J : Lign_Type)
+        (Terrain : Gdk_RGBA; Data : IIO.Image_Data; I, J : Lign_Type)
          return Integer
       is
 
          Pixel : constant Gdk_RGBA :=
-           Color_Info_To_GdkRGBA (Get_Pixel_Color (Data, Pos (I), Pos (J)));
+           RGBA.Color_Info_To_GdkRGBA
+           (RGBA.Get_Pixel_Color (Data, Pos (I), Pos (J)));
       begin
 
          return (if RGBA."=" (Pixel, Terrain) then 1 else 0);
@@ -247,13 +263,13 @@ package body Generation is
    is
 
       N     : constant Positive := Current_Zoom;
-      Image : Handle;
+      Image : IIO_H.Handle;
    begin
 
-      Read (Image_Destination & Source, Image);
+      IIO_O.Read (RGBA.Image_Destination & Source, Image);
 
       declare
-         Data : Image_Data := Image.Value;
+         Data : IIO.Image_Data := Image.Value;
 
       begin
 
@@ -263,8 +279,9 @@ package body Generation is
                declare
 
                   Color : constant Gdk_RGBA :=
-                    Color_Info_To_GdkRGBA
-                      (Get_Pixel_Color (Data, Pos (I), Pos (J)));
+                    RGBA.Color_Info_To_GdkRGBA
+                      (RGBA.Get_Pixel_Color
+                        (Data, Pos (I), Pos (J)));
 
                begin
 
@@ -274,7 +291,7 @@ package body Generation is
                        Dilatation_Number)
                   then
 
-                     Put_Pixel (Data, Pos (I), Pos (J), From);
+                     RGBA.Put_Pixel (Data, Pos (I), Pos (J), From);
 
                   end if;
                end;
@@ -282,7 +299,7 @@ package body Generation is
             end loop;
          end loop;
 
-         Write_PNG (Image_Destination & Source, Data);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Source, Data);
 
       end;
 
@@ -303,8 +320,8 @@ package body Generation is
    -----------------------------
 
    function Not_Correct_Temperature
-     (Temp_Map : Temperature_Map_Z5; I, J : Pos; T : Temperature_Type)
-      return Boolean
+     (Temp_Map : Temperature_Map_Z5; I, J : Pos;
+     T : Temperature_Type) return Boolean
    is
    begin
       return not (Temp_Map (Row_Z5 (I), Col_Z5 (J)) = T);
@@ -321,10 +338,12 @@ package body Generation is
       J_R : constant Natural := Natural (J);
 
       Is_Upper : constant Boolean :=
-        I_R = Natural (Row_Z5'First) or else J_R = Natural (Col_Z5'First);
+        I_R = Natural (Row_Z5'First) or else
+        J_R = Natural (Col_Z5'First);
 
       Is_Lower : constant Boolean :=
-        I_R = Natural (Row_Z5'Last) or else J_R = Natural (Col_Z5'Last);
+        I_R = Natural (Row_Z5'Last) or else
+        J_R = Natural (Col_Z5'Last);
    begin
 
       return Is_Upper or else Is_Lower;
@@ -347,20 +366,22 @@ package body Generation is
    -------------
 
    function Diffuse
-     (Data      : out Image_Data; Temp_Map : Temperature_Map_Z5;
-      Visit_Map :     Any_Visit_Map; I, J : Pos; T : Temperature_Type;
-      Biome     :     Gdk_RGBA) return Natural
+     (Data        : out IIO.Image_Data;   Temp_Map : Temperature_Map_Z5;
+      Visit_Map   : Any_Visit_Map;        I, J     : Pos;
+      T           : Temperature_Type;  Biome    : Gdk_RGBA)
+   return Natural
    is
    begin
 
       if Will_Be_Out_Of_Bound (I, J) then
-         Put_Pixel (Data, I, J, Biome);
+
+         RGBA.Put_Pixel (Data, I, J, Biome);
          return 1;
       end if;
 
       declare
          Color_Gdk : constant Gdk_RGBA :=
-           Color_Info_To_GdkRGBA (Get_Pixel_Color (Data, I, J));
+           RGBA.Color_Info_To_GdkRGBA (RGBA.Get_Pixel_Color (Data, I, J));
 
       begin
 
@@ -372,7 +393,7 @@ package body Generation is
          end if;
 
          Visit_Map (Row_Visit (I), Col_Visit (J)) := True;
-         Put_Pixel (Data, I, J, Biome);
+         RGBA.Put_Pixel (Data, I, J, Biome);
 
          --  Because of the termination condition above, no overwritten
          --  is possible
@@ -391,14 +412,15 @@ package body Generation is
    ------------------------
 
    function Choose_And_Diffuse
-     (Data      : out Image_Data; Temp_Map : Temperature_Map_Z5;
-      Visit_Map :     Any_Visit_Map; I, J : Pos; T : Temperature_Type)
-      return Natural
+     (Data        : out IIO.Image_Data;   Temp_Map : Temperature_Map_Z5;
+      Visit_Map   :     Any_Visit_Map;    I, J     : Pos;
+      T           : Temperature_Type)
+   return Natural
    is
 
       Choice  : constant Ada.Numerics.Float_Random.Uniformly_Distributed :=
-        Choose_Zone_Biome;
-      Visited : Natural                                                  := 0;
+        Rnd_Bio.Choose_Zone_Biome;
+      Visited : Natural := 0;
       Biome   : BiomeGroup;
 
    begin
@@ -419,6 +441,7 @@ package body Generation is
 
          when Freezing =>
             Biome := Freezing_Group;
+
       end case;
 
       if Choice >= 0.0 and then Choice <= 0.8 then
@@ -461,10 +484,10 @@ package body Generation is
    ------------------
 
    procedure Place_Biomes
-     (Source : String; Temp_Map : Temperature_Map_Z5; Current_Zoom : Positive)
+     (Source      : String; Temp_Map : Temperature_Map_Z5;
+     Current_Zoom : Positive)
    is
-
-      Image : Handle;
+      Image : IIO_H.Handle;
 
       Visit_Map : constant Any_Visit_Map := new Is_Visited_Map;
 
@@ -475,10 +498,10 @@ package body Generation is
 
    begin
 
-      Read (Image_Destination & Source, Image);
+      IIO_O.Read (RGBA.Image_Destination & Source, Image);
 
       declare
-         Data : Image_Data := Image.Value;
+         Data : IIO.Image_Data := Image.Value;
       begin
 
          Visit_Map.all := (others => (others => False));
@@ -509,11 +532,12 @@ package body Generation is
 
             declare
 
-               Coords : constant Point := Draw_Random_Position (Current_Zoom);
+               Coords : constant Point :=
+                  Draw_Random_Position (Current_Zoom);
 
                Color_Gdk : constant Gdk_RGBA :=
-                 Color_Info_To_GdkRGBA
-                   (Get_Pixel_Color (Data, Coords.X, Coords.Y));
+                 RGBA.Color_Info_To_GdkRGBA
+                   (RGBA.Get_Pixel_Color (Data, Coords.X, Coords.Y));
 
                Visited : constant Boolean :=
                  Visit_Map (Row_Visit (Coords.X), Col_Visit (Coords.Y));
@@ -535,7 +559,7 @@ package body Generation is
             Total_Tries := Total_Tries + 1;
          end loop;
 
-         Write_PNG (Image_Destination & Source, Data);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Source, Data);
       end;
 
    end Place_Biomes;
@@ -548,20 +572,20 @@ package body Generation is
 
       N : constant Integer := Current_Zoom;
 
-      Hills_Map : Handle;
-      Ocean_Map : Handle;
-      Biome_Map : Handle;
+      Hills_Map : IIO_H.Handle;
+      Ocean_Map : IIO_H.Handle;
+      Biome_Map : IIO_H.Handle;
 
    begin
 
-      Read (Image_Destination & "Hills_6.png", Hills_Map);
-      Read (Image_Destination & "Ocean_6.png", Ocean_Map);
-      Read (Image_Destination & Source, Biome_Map);
+      IIO_O.Read (RGBA.Image_Destination & "Hills_6.png", Hills_Map);
+      IIO_O.Read (RGBA.Image_Destination & "Ocean_6.png", Ocean_Map);
+      IIO_O.Read (RGBA.Image_Destination & Source, Biome_Map);
 
       declare
-         Data_Hills : constant Image_Data := Hills_Map.Value;
-         Data_Ocean : constant Image_Data := Ocean_Map.Value;
-         Data_Biome : Image_Data          := Biome_Map.Value;
+         Data_Hills : constant IIO.Image_Data := Hills_Map.Value;
+         Data_Ocean : constant IIO.Image_Data := Ocean_Map.Value;
+         Data_Biome : IIO.Image_Data          := Biome_Map.Value;
       begin
 
          for i_index in 0 .. N - 1 loop
@@ -573,44 +597,47 @@ package body Generation is
                   J : constant Pos := Pos (j_index);
 
                   Hill_Map_Pixel : constant Gdk_RGBA :=
-                    Color_Info_To_GdkRGBA (Get_Pixel_Color (Data_Hills, I, J));
+                    RGBA.Color_Info_To_GdkRGBA
+                     (RGBA.Get_Pixel_Color (Data_Hills, I, J));
 
                   Ocean_Map_Pixel : constant Gdk_RGBA :=
-                    Color_Info_To_GdkRGBA (Get_Pixel_Color (Data_Ocean, I, J));
+                    RGBA.Color_Info_To_GdkRGBA
+                     (RGBA.Get_Pixel_Color (Data_Ocean, I, J));
 
                   Biome_Map_Pixel : constant Gdk_RGBA :=
-                    Color_Info_To_GdkRGBA (Get_Pixel_Color (Data_Biome, I, J));
+                    RGBA.Color_Info_To_GdkRGBA
+                     (RGBA.Get_Pixel_Color (Data_Biome, I, J));
 
                begin
 
                   if RGBA."=" (Hill_Map_Pixel, Rocks) then
 
                      if RGBA."=" (Biome_Map_Pixel, Mesa) then
-                        Put_Pixel (Data_Biome, I, J, Mesa_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Mesa_Hills);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Rainforest) then
-                        Put_Pixel (Data_Biome, I, J, Rainforest_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Rainforest_Hills);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Jungle) then
-                        Put_Pixel (Data_Biome, I, J, Jungle_Tree);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Jungle_Tree);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Forest) then
-                        Put_Pixel (Data_Biome, I, J, Forest_Trees);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Forest_Trees);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Rocks) then
-                        Put_Pixel (Data_Biome, I, J, Rocky_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Rocky_Hills);
 
                      elsif RGBA."=" (Biome_Map_Pixel, SnowyTaiga) then
-                        Put_Pixel (Data_Biome, I, J, SnowyTaiga_Snow);
+                        RGBA.Put_Pixel (Data_Biome, I, J, SnowyTaiga_Snow);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Snowy) then
-                        Put_Pixel (Data_Biome, I, J, Snowy_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Snowy_Hills);
 
                      elsif RGBA."=" (Biome_Map_Pixel, Ice) then
-                        Put_Pixel (Data_Biome, I, J, Ice_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, Ice_Hills);
 
                      elsif RGBA."=" (Biome_Map_Pixel, SnowIce) then
-                        Put_Pixel (Data_Biome, I, J, SnowyIce_Hills);
+                        RGBA.Put_Pixel (Data_Biome, I, J, SnowyIce_Hills);
 
                      end if;
                   end if;
@@ -619,7 +646,7 @@ package body Generation is
                     and then RGBA."=" (Biome_Map_Pixel, Ocean)
                   then
 
-                     Put_Pixel (Data_Biome, I, J, Deep_Ocean);
+                     RGBA.Put_Pixel (Data_Biome, I, J, Deep_Ocean);
 
                   end if;
 
@@ -627,7 +654,7 @@ package body Generation is
             end loop;
          end loop;
 
-         Write_PNG (Image_Destination & Source, Data_Biome);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Source, Data_Biome);
       end;
 
    end Place_Topography;

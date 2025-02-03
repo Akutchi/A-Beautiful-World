@@ -1,7 +1,10 @@
-with Image_IO.Holders;    use Image_IO.Holders;
-with Image_IO.Operations; use Image_IO.Operations;
+with Image_IO.Holders;
+with Image_IO.Operations;
 
 package body RGBA is
+
+   package IIO_H renames Image_IO.Holders;
+   package IIO_O renames Image_IO.Operations;
 
    ------------------
    -- Almost_Equal --
@@ -19,8 +22,8 @@ package body RGBA is
    -- = --
    -------
 
-   function "=" (Lossy_Color : Gdk_RGBA; To : Gdk_RGBA) return Boolean is
-
+   function "=" (Lossy_Color : Gdk_RGBA; To : Gdk_RGBA) return Boolean
+   is
       epsilon : constant Precision := 0.01;
 
    begin
@@ -36,18 +39,18 @@ package body RGBA is
    -- Create_Image --
    ------------------
 
-   procedure Create_Image (Name : String; Zoom : Positive) is
-
-      Image : Handle;
+   procedure Create_Image (Name : String; Zoom : Positive)
+   is
+      Image : IIO_H.Handle;
 
    begin
 
-      Create (Image, Zoom, Zoom);
+      IIO_H.Create (Image, Zoom, Zoom);
 
       declare
-         Data : constant Image_Data := Image.Value;
+         Data : constant IIO.Image_Data := Image.Value;
       begin
-         Write_PNG (Image_Destination & Name, Data);
+         IIO_O.Write_PNG (Image_Destination & Name, Data);
       end;
 
    end Create_Image;
@@ -56,28 +59,31 @@ package body RGBA is
    -- UInt8_To_Gdouble --
    ----------------------
 
-   function UInt8_To_Gdouble (c : Interfaces.Unsigned_8) return Gdouble is
+   function UInt8_To_Gdouble (c : Interfaces.Unsigned_8) return Gdouble
+   is
    begin
-
       return Gdouble (Float (c) / 255.0);
+
    end UInt8_To_Gdouble;
 
    ----------------------
    -- Gdouble_To_UInt8 --
    ----------------------
 
-   function Gdouble_To_UInt8 (x : Gdouble) return Interfaces.Unsigned_8 is
+   function Gdouble_To_UInt8 (x : Gdouble) return Interfaces.Unsigned_8
+   is
    begin
       return Interfaces.Unsigned_8 (Float'Rounding (Float (x) * 255.0));
+
    end Gdouble_To_UInt8;
 
    ---------------------------
    -- GdkRGBA_To_Color_Info --
    ---------------------------
 
-   function GdkRGBA_To_Color_Info (Color : Gdk_RGBA) return Color_Info is
-
-      Color_I : Color_Info;
+   function GdkRGBA_To_Color_Info (Color : Gdk_RGBA) return IIO.Color_Info
+   is
+      Color_I : IIO.Color_Info;
 
    begin
 
@@ -93,8 +99,8 @@ package body RGBA is
    -- Color_Info_To_GdkRGBA --
    ---------------------------
 
-   function Color_Info_To_GdkRGBA (Color : Color_Info) return Gdk_RGBA is
-
+   function Color_Info_To_GdkRGBA (Color : IIO.Color_Info) return Gdk_RGBA
+   is
       Color_Gdk : Gdk_RGBA;
 
    begin
@@ -112,7 +118,8 @@ package body RGBA is
    -- Flatten --
    -------------
 
-   function Flatten (c : Gdk_RGBA) return Gdk_RGBA is
+   function Flatten (c : Gdk_RGBA) return Gdk_RGBA
+   is
 
       function trunc (x : Gdouble) return Gdouble;
 
@@ -125,15 +132,16 @@ package body RGBA is
 
    begin
       return (trunc (c.Red), trunc (c.Green), trunc (c.Blue), c.Alpha);
+
    end Flatten;
 
    ---------------
    -- Put_Pixel --
    ---------------
 
-   procedure Put_Pixel (Data : in out Image_Data; X, Y : Pos; Color : Gdk_RGBA)
+   procedure Put_Pixel
+      (Data : in out IIO.Image_Data; X, Y : Rnd_Pos.Pos; Color : Gdk_RGBA)
    is
-
    begin
 
       Data (Natural (X), Natural (Y)) := GdkRGBA_To_Color_Info (Color);
@@ -144,7 +152,8 @@ package body RGBA is
    -- Get_Pixel_Color --
    ---------------------
 
-   function Get_Pixel_Color (Data : Image_Data; X, Y : Pos) return Color_Info
+   function Get_Pixel_Color (Data : IIO.Image_Data; X, Y : Rnd_Pos.Pos)
+   return IIO.Color_Info
    is
    begin
 

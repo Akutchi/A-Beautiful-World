@@ -17,7 +17,7 @@ procedure a_beautiful_world is
    package IIO_H renames Image_IO.Holders;
    package IIO_O renames Image_IO.Operations;
 
-   package M_S renames Math_Spline;
+   package MS renames Math_Spline;
 
    Win           : Main_Windows.Main_Window;
    Main_Canvas   : Canvas.Image_Canvas;

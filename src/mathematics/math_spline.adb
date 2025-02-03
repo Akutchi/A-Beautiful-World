@@ -1,12 +1,11 @@
-with Ada.Text_IO;
-with Ada.Numerics.Float_Random;
+with Ada.Text_IO; use Ada.Text_IO;
 
-with GNAT.Formatted_String; use GNAT.Formatted_String;
+with Ada.Numerics.Float_Random;
 with System;
 
-package body Math_Spline is
+with GNAT.Formatted_String; use GNAT.Formatted_String;
 
-   package T_IO renames Ada.Text_IO;
+package body Math_Spline is
 
    -----------
    -- Trunc --
@@ -152,8 +151,7 @@ package body Math_Spline is
       Format_t := Format_t & abs (P (1));
       Format_c := Format_c & abs (P (2));
 
-      T_IO.Put_Line
-         ((-Format_t2) & t_sign & (-Format_t) & c_sign & (-Format_c));
+      Put_Line ((-Format_t2) & t_sign & (-Format_t) & c_sign & (-Format_c));
 
    end Print;
 
@@ -161,9 +159,9 @@ package body Math_Spline is
    is
    begin
 
-      Print (S.S_t (1));
-      Print (S.S_t (2));
-      Print (S.S_t (3));
+      Print (S.S_t (S.S_t'First));
+      Print (S.S_t (S.S_t'First + 1));
+      Print (S.S_t (S.S_t'Last));
 
    end Print;
 

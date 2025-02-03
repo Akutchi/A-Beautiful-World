@@ -12,9 +12,11 @@ package body Math_Operations is
    -- Data_To_Vector --
    --------------------
 
-   function Data_To_Vector (Data : Image_Data; I, J : Integer) return Vector is
+   function Data_To_Vector (Data : IIO.Image_Data; I, J : Integer)
+   return Vector
+   is
+      Color : constant IIO.Color_Info := Data (Natural (I), Natural (J));
 
-      Color : constant Color_Info := Data (Natural (I), Natural (J));
    begin
 
       return (Float (Color.Red), Float (Color.Green), Float (Color.Blue));
@@ -25,7 +27,8 @@ package body Math_Operations is
    -- " - " --
    -----------
 
-   function "-" (u : Vector; v : Vector) return Vector is
+   function "-" (u : Vector; v : Vector) return Vector
+   is
    begin
       return (u.X - v.X, u.Y - v.Y, u.Z - v.Z);
    end "-";
@@ -34,9 +37,10 @@ package body Math_Operations is
    -- " = " --
    -----------
 
-   function "=" (u : Vector; x : Float) return Boolean is
-
+   function "=" (u : Vector; x : Float) return Boolean
+   is
       u_n : constant Float := norm (u);
+
    begin
       return u_n > x - epsilon and then u_n < x + epsilon;
    end "=";
@@ -45,10 +49,12 @@ package body Math_Operations is
    -- Gradient_x --
    ----------------
 
-   function Gradient_x (Data : Image_Data; I, J : Integer) return Vector is
-
+   function Gradient_x (Data : IIO.Image_Data; I, J : Integer)
+   return Vector
+   is
       u : constant Vector := Data_To_Vector (Data, I - 1, J);
       v : constant Vector := Data_To_Vector (Data, I + 1, J);
+
    begin
 
       return v - u;
@@ -59,10 +65,11 @@ package body Math_Operations is
    -- Gradient_y --
    ----------------
 
-   function Gradient_y (Data : Image_Data; I, J : Integer) return Vector is
-
+   function Gradient_y (Data : IIO.Image_Data; I, J : Integer) return Vector
+   is
       u : constant Vector := Data_To_Vector (Data, I, J - 1);
       v : constant Vector := Data_To_Vector (Data, I, J + 1);
+
    begin
 
       return v - u;
@@ -73,7 +80,8 @@ package body Math_Operations is
    -- norm --
    ----------
 
-   function norm (Point : Vector) return Float is
+   function norm (Point : Vector) return Float
+   is
    begin
 
       return Float_Calculations.Sqrt (Point.X**2 + Point.Y**2 + Point.Z**2);
@@ -83,8 +91,8 @@ package body Math_Operations is
    -- Normalize --
    ---------------
 
-   function Normalize (u : Vector) return Vector is
-
+   function Normalize (u : Vector) return Vector
+   is
       u_n : Float;
       v   : Vector := (0.0, 0.0, 0.0);
 
@@ -110,8 +118,8 @@ package body Math_Operations is
    -- Random_2D_Unit_Gradient --
    -----------------------------
 
-   function Random_2D_Unit_Gradient return Vector is
-
+   function Random_2D_Unit_Gradient return Vector
+   is
       Gradient : Vector;
       G        : Ada.Numerics.Float_Random.Generator;
 
@@ -138,7 +146,8 @@ package body Math_Operations is
    -- dot --
    ---------
 
-   function dot (u : Vector; v : Vector) return Float is
+   function dot (u : Vector; v : Vector) return Float
+   is
    begin
 
       return u.X * v.X + u.Y * v.Y + u.Z * v.Z;
@@ -149,7 +158,8 @@ package body Math_Operations is
    -- Smoothstep --
    ----------------
 
-   function Smoothstep (w : Float) return Float is
+   function Smoothstep (w : Float) return Float
+   is
    begin
 
       if w >= 1.0 then
@@ -168,7 +178,8 @@ package body Math_Operations is
    -- Interpolate --
    -----------------
 
-   function Interpolate (a0, a1 : Float; w : Float) return Float is
+   function Interpolate (a0, a1 : Float; w : Float) return Float
+   is
    begin
 
       return (a1 - a0) * Smoothstep (w) + a0;
@@ -179,7 +190,8 @@ package body Math_Operations is
    -- Init_Perlin_Map --
    ---------------------
 
-   procedure Init_Perlin_Map (Over_Grid : out Perlin_Map) is
+   procedure Init_Perlin_Map (Over_Grid : out Perlin_Map)
+   is
    begin
 
       for I in Perlin_Row'Range loop
@@ -205,10 +217,11 @@ package body Math_Operations is
    -- Create_Offset --
    -------------------
 
-   function Create_Offset
-     (x, y : Float; xi : Perlin_Row; yi : Perlin_Col) return Vector
+   function Create_Offset (x, y : Float; xi : Perlin_Row; yi : Perlin_Col)
+   return Vector
    is
       o : Vector;
+
    begin
       o.X := x - Float (xi);
       o.Y := y - Float (yi);
@@ -221,9 +234,11 @@ package body Math_Operations is
    -- Scale_To_Temperature --
    --------------------------
 
-   function Scale_To_Temperature (x : Float) return Float is
+   function Scale_To_Temperature (x : Float) return Float
+   is
    begin
       return 2.0 * x + 3.0;
+
    end Scale_To_Temperature;
 
    ---------------------
@@ -232,7 +247,7 @@ package body Math_Operations is
 
    function Calculate_Value
      (Over_Grid : Perlin_Map; x, y : Float; xi : Perlin_Row; yi : Perlin_Col)
-      return Float
+   return Float
    is
       offset : constant Vector := Normalize (Create_Offset (x, y, xi, yi));
 
@@ -278,9 +293,10 @@ package body Math_Operations is
 
    end Perlin_Noise;
 
-   function "*" (A, B : Interpolation_Map) return Float is
-
+   function "*" (A, B : Interpolation_Map) return Float
+   is
       value : Float := 0.0;
+
    begin
 
       for I in Interpolation_Row'Range loop
@@ -297,38 +313,41 @@ package body Math_Operations is
    -- Scale_To_Interploate --
    --------------------------
 
-   function Scale_To_Interploate (y : Float) return Float is
+   function Scale_To_Interploate (y : Float) return Float
+   is
    begin
       return (y - 3.0) / 2.0;
+
    end Scale_To_Interploate;
 
    --------
    -- Kx --
    --------
 
-   function Kx (Local_Inverse : Interpolation_Map) return Float is
+   function Kx (Local_Inverse : Interpolation_Map) return Float
+   is
    begin
 
       return Local_Inverse * Mask_Gx;
-
    end Kx;
 
    --------
    -- Ky --
    --------
 
-   function Ky (Local_Inverse : Interpolation_Map) return Float is
+   function Ky (Local_Inverse : Interpolation_Map) return Float
+   is
    begin
 
       return Local_Inverse * Mask_Gy;
-
    end Ky;
 
    ------------------
    -- Print_Vector --
    ------------------
 
-   procedure Print_Vector (u : Vector) is
+   procedure Print_Vector (u : Vector)
+   is
    begin
 
       Put_Line

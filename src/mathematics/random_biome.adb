@@ -1,12 +1,21 @@
 package body Random_Biome is
 
-   function Draw_Random_Base_Biome return Land_Or_Ocean is
+   ----------------------------
+   -- Draw_Random_Base_Biome --
+   ----------------------------
+
+   function Draw_Random_Base_Biome return Land_Or_Ocean
+   is
    begin
 
       Random_Base_Biome.Reset (G);
       return Random_Base_Biome.Random (G);
 
    end Draw_Random_Base_Biome;
+
+   -----------------------
+   -- Choose_Zone_Biome --
+   -----------------------
 
    function Choose_Zone_Biome
       return Ada.Numerics.Float_Random.Uniformly_Distributed

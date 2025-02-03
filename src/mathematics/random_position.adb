@@ -2,7 +2,12 @@ with Constants; use Constants;
 
 package body Random_Position is
 
-   function Draw (Zoom : Integer) return Point is
+   ----------
+   -- Draw --
+   ----------
+
+   function Draw (Zoom : Integer) return Point
+   is
    begin
 
       Random_Z1.Reset (GZ1);
@@ -40,7 +45,12 @@ package body Random_Position is
 
    end Draw;
 
-   function Draw_Random_Position (Zoom : Integer) return Point is
+   --------------------------
+   -- Draw_Random_Position --
+   --------------------------
+
+   function Draw_Random_Position (Zoom : Integer) return Point
+   is
    begin
 
       case Zoom is

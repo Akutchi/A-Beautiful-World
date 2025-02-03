@@ -17,13 +17,15 @@
 
 with Gdk.RGBA; use Gdk.RGBA;
 
-with Image_IO; use Image_IO;
+with Image_IO;
 
 with Constants;       use Constants;
 with Temperature_Map; use Temperature_Map;
 with Random_Position; use Random_Position;
 
 package Generation is
+
+   package IIO renames Image_IO;
 
    type Zoom_Levels_List is array (Natural range 0 .. 6) of Positive;
    Zoom_Levels : constant Zoom_Levels_List := (Z1, Z2, Z3, Z4, Z5, Z6, Z7);
@@ -41,7 +43,7 @@ package Generation is
 private
 
    function Surrounded_By
-     (Terrain           : Gdk_RGBA; Data : Image_Data; I, J : Lign_Type;
+     (Terrain           : Gdk_RGBA; Data : IIO.Image_Data; I, J : Lign_Type;
       Dilatation_Number : Positive := 5) return Boolean;
 
    procedure Island (Source : String);
@@ -61,7 +63,8 @@ private
    function Not_Correct_Terrain (Color : Gdk_RGBA) return Boolean;
 
    function Not_Correct_Temperature
-     (Temp_Map : Temperature_Map_Z5; I, J : Pos; T : Temperature_Type)
+     (Temp_Map : Temperature_Map_Z5; I, J : Pos;
+      T        : Temperature_Type)
       return Boolean;
 
    function Will_Be_Out_Of_Bound (I, J : Pos) return Boolean;
@@ -70,9 +73,10 @@ private
      (Visit_Map : Any_Visit_Map; I, J : Pos) return Boolean;
 
    function Diffuse
-     (Data      : out Image_Data; Temp_Map : Temperature_Map_Z5;
-      Visit_Map :     Any_Visit_Map; I, J : Pos; T : Temperature_Type;
-      Biome     :     Gdk_RGBA) return Natural;
+     (Data      : out IIO.Image_Data;  Temp_Map : Temperature_Map_Z5;
+      Visit_Map :     Any_Visit_Map;   I, J     : Pos;
+      T         : Temperature_Type; Biome    : Gdk_RGBA)
+   return Natural;
    --  The current way of creating biomes is by diffusing recursively.
    --
    --  Indeed, because of biomes variations, the temperatures are not equal to
@@ -82,14 +86,16 @@ private
    --  Thus, I opted for 1 Zone = 1 SubBiome.
 
    function Choose_And_Diffuse
-     (Data      : out Image_Data; Temp_Map : Temperature_Map_Z5;
-      Visit_Map :     Any_Visit_Map; I, J : Pos; T : Temperature_Type)
-      return Natural;
+     (Data      : out IIO.Image_Data;  Temp_Map : Temperature_Map_Z5;
+      Visit_Map : Any_Visit_Map;       I, J     : Pos;
+      T         : Temperature_Type)
+   return Natural;
 
    function Everything_Visited (Visit_Map : Any_Visit_Map) return Boolean;
 
    procedure Place_Biomes
-     (Source : String; Temp_Map : Temperature_Map_Z5; Current_Zoom : Positive);
+     (Source : String; Temp_Map : Temperature_Map_Z5;
+     Current_Zoom : Positive);
 
    procedure Place_Topography (Source : String; Current_Zoom : Positive);
 

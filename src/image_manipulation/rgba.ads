@@ -14,11 +14,15 @@ with Interfaces;
 with Glib;     use Glib;
 with Gdk.RGBA; use Gdk.RGBA;
 
-with Image_IO; use Image_IO;
+with Image_IO;
 
-with Random_Position; use Random_Position;
+with Random_Position;
 
 package RGBA is
+
+   package IIO renames Image_IO;
+
+   package Rnd_Pos renames Random_Position;
 
    Image_Destination      : constant String := "../layer_templates/";
    Pixel_Type             : constant String := "../layer_templates/res.txt";
@@ -37,19 +41,20 @@ package RGBA is
 
    function Gdouble_To_UInt8 (x : Gdouble) return Interfaces.Unsigned_8;
 
-   function Color_Info_To_GdkRGBA (Color : Color_Info) return Gdk_RGBA;
+   function Color_Info_To_GdkRGBA (Color : IIO.Color_Info) return Gdk_RGBA;
    --  In the (R,G,B) float format
 
-   function GdkRGBA_To_Color_Info (Color : Gdk_RGBA) return Color_Info;
+   function GdkRGBA_To_Color_Info (Color : Gdk_RGBA) return IIO.Color_Info;
    --  In the (R,G,B) integer format
 
    function Flatten (c : Gdk_RGBA) return Gdk_RGBA;
    --  truncate color components to their first decimal (e.g 0.29 -> 0.2)
 
    procedure Put_Pixel
-     (Data : in out Image_Data; X, Y : Pos; Color : Gdk_RGBA);
+     (Data : in out IIO.Image_Data; X, Y : Rnd_Pos.Pos; Color : Gdk_RGBA);
 
-   function Get_Pixel_Color (Data : Image_Data; X, Y : Pos) return Color_Info;
+   function Get_Pixel_Color (Data : IIO.Image_Data; X, Y : Rnd_Pos.Pos)
+   return IIO.Color_Info;
    --  In the (R,G,B) integer format
 
 private

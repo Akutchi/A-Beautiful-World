@@ -1,15 +1,20 @@
 with Ada.Text_IO; use Ada.Text_IO;
 
-with Image_IO;            use Image_IO;
-with Image_IO.Holders;    use Image_IO.Holders;
-with Image_IO.Operations; use Image_IO.Operations;
+with Image_IO;
+with Image_IO.Holders;
+with Image_IO.Operations;
 
-with RGBA;            use RGBA;
 with Math_Operations; use Math_Operations;
 with Random_Position; use Random_Position;
 with Constants;       use Constants;
 
+with RGBA;
+
 package body Temperature_Map is
+
+   package IIO renames Image_IO;
+   package IIO_H renames Image_IO.Holders;
+   package IIO_O renames Image_IO.Operations;
 
    -----------------------------
    -- Init_Temperature_Map_Z5 --
@@ -149,8 +154,11 @@ package body Temperature_Map is
 
             declare
 
-               I_R : constant Row_Z5 := Row_Z5 (Positive (I) * Perlin_Shift);
-               J_R : constant Col_Z5 := Col_Z5 (Positive (J) * Perlin_Shift);
+               I_R : constant Row_Z5 :=
+                  Row_Z5 (Positive (I) * Perlin_Shift);
+
+               J_R : constant Col_Z5 :=
+                  Col_Z5 (Positive (J) * Perlin_Shift);
 
                Pixel : constant Temperature_Type := Temperature_Map (I_R, J_R);
 
@@ -164,9 +172,12 @@ package body Temperature_Map is
 
                   Local_Inverse_Map :=
                     Calculate_Local_Inverse (Temperature_Map, I_R, J_R);
-                  G                 :=
-                    Normalize
-                      ((Kx (Local_Inverse_Map), Ky (Local_Inverse_Map), 0.0));
+
+                  G := Normalize ((
+                                       Kx (Local_Inverse_Map),
+                                       Ky (Local_Inverse_Map),
+                                       0.0
+                                    ));
 
                   if not (G = 0.0) then
 
@@ -205,15 +216,15 @@ package body Temperature_Map is
      (Temp_Map : Temperature_Map_Z5; Current_Zoom : Positive)
    is
 
-      Image : Handle;
+      Image : IIO_H.Handle;
    begin
 
-      Create_Image (Image_Destination & Model_Name, Current_Zoom);
-      Read (Image_Destination & Model_Name, Image);
+      RGBA.Create_Image (RGBA.Image_Destination & Model_Name, Current_Zoom);
+      IIO_O.Read (RGBA.Image_Destination & Model_Name, Image);
 
       declare
 
-         Data_Model : Image_Data := Image.Value;
+         Data_Model : IIO.Image_Data := Image.Value;
 
       begin
 
@@ -229,22 +240,22 @@ package body Temperature_Map is
 
                   case T is
                      when Warm =>
-                        Put_Pixel (Data_Model, I, J, Dark_Red);
+                        RGBA.Put_Pixel (Data_Model, I, J, Dark_Red);
                      when Equatorial =>
-                        Put_Pixel (Data_Model, I, J, Red);
+                        RGBA.Put_Pixel (Data_Model, I, J, Red);
                      when Temperate =>
-                        Put_Pixel (Data_Model, I, J, White);
+                        RGBA.Put_Pixel (Data_Model, I, J, White);
                      when Cold =>
-                        Put_Pixel (Data_Model, I, J, Blue);
+                        RGBA.Put_Pixel (Data_Model, I, J, Blue);
                      when Freezing =>
-                        Put_Pixel (Data_Model, I, J, Dark_Blue);
+                        RGBA.Put_Pixel (Data_Model, I, J, Dark_Blue);
                   end case;
 
                end;
             end loop;
          end loop;
 
-         Write_PNG (Image_Destination & Model_Name, Data_Model);
+         IIO_O.Write_PNG (RGBA.Image_Destination & Model_Name, Data_Model);
       end;
 
    end Show_Temperature_Model;

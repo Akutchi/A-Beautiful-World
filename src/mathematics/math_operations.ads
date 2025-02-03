@@ -6,7 +6,7 @@
 --  Perlin noise algorithm can be found here [1], but in short,             --
 --  in our case :                                                           --
 --                                                                          --
---  Step 1 : Cut your image into a grid of KxK boxes (I will call it the    --
+--  Step 1 : Cut your image into a grid of K x K boxes (I will call it the  --
 --  sub grid) and create a grid of (K+1)x(K+1) boxes to represent each of   --
 --  said grid intersections (let's call it the over grid). Then, initialize --
 --  a random gradient vector in each over grid's box.                       --
@@ -17,7 +17,7 @@
 --                                                                          --
 --  Step 3 : With those four new values, you can now interpolate both       --
 --  horizontally and vertically to get your pixel value.                    --
---
+--                                                                          --
 --  [1] Algorithm description here :                                        --
 --                                                                          --
 --  FR : https://fr.wikipedia.org/wiki/Bruit_de_Perlin                      --
@@ -25,9 +25,11 @@
 --                                                                          --
 ------------------------------------------------------------------------------
 
-with Image_IO; use Image_IO;
+with Image_IO;
 
 package Math_Operations is
+
+   package IIO renames Image_IO;
 
    type Vector is record
 
@@ -41,6 +43,7 @@ package Math_Operations is
 
       Gradient : Vector;
       Value    : Float;
+
    end record;
 
    type Perlin_Row is range 0 .. 5;
@@ -60,11 +63,12 @@ package Math_Operations is
    --  Holds only with respect to the null vector
    --  (here represented by its norm)
 
-   function Data_To_Vector (Data : Image_Data; I, J : Integer) return Vector;
+   function Data_To_Vector (Data : IIO.Image_Data; I, J : Integer)
+   return Vector;
 
-   function Gradient_x (Data : Image_Data; I, J : Integer) return Vector;
+   function Gradient_x (Data : IIO.Image_Data; I, J : Integer) return Vector;
 
-   function Gradient_y (Data : Image_Data; I, J : Integer) return Vector;
+   function Gradient_y (Data : IIO.Image_Data; I, J : Integer) return Vector;
 
    function norm (Point : Vector) return Float;
 
@@ -108,8 +112,10 @@ package Math_Operations is
    --  [|1; 5|] => [-1; 1]
 
    function Kx (Local_Inverse : Interpolation_Map) return Float;
+   --  Horizontal Kernel
 
    function Ky (Local_Inverse : Interpolation_Map) return Float;
+   --  Vertical one
 
    procedure Print_Vector (u : Vector);
 
